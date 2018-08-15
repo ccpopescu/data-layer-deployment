@@ -1,0 +1,4 @@
+---
+
+nosql_jdk_version: "1.8.0"
+nosql_jdk_patch_id: "161-0.b14.el7_4"

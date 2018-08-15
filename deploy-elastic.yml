@@ -1,0 +1,7 @@
+---
+
+- name: Java
+  hosts: java
+
+  roles:
+    - java
