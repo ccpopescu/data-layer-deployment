@@ -1,0 +1,13 @@
+---
+
+# Install Java Development Kit
+- name: install java dk
+  yum: 
+    name: "java-{{ role_str_main_version }}-openjdk-{{ role_str_main_version }}.{{ role_str_patch_id }}.x86_64"
+    state: present
+    disable_gpg_check: yes
+    update_cache: yes
+
+# Check install and version
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"

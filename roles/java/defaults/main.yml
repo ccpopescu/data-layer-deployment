@@ -1,0 +1,10 @@
+---
+
+## To uninstall set:
+# role_str_version: "-1"
+role_str_main_version: "1.8.0"
+role_str_update: "181"
+role_str_patch_id: "181-3.b13.el7_5"
+role_str_version: "{{role_str_main_version}}_{{role_str_update}}"
+role_cmd_get_version: "java -version"
+role_str_installed: 'openjdk version "{{role_str_version}}'

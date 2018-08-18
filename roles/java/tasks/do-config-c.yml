@@ -1,0 +1,9 @@
+---
+
+- name: configure security limits
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "{{ item }}"
+  loop:
+    - "* soft memlock unlimited"
+    - "* hard memlock unlimited"

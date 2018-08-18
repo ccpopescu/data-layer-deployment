@@ -1,0 +1,18 @@
+---
+
+- name: uninstall java
+  yum:
+    name: "java*"
+    state: removed
+
+- name: unconfigure security limits
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "{{ item }}"
+    state: absent
+  loop:
+    - "* soft memlock unlimited"
+    - "* hard memlock unlimited"
+
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"

@@ -1,4 +1,5 @@
 ---
 
-- include_tasks: "java-c.yml"
-  when: (ansible_distribution is search("CentOS")) and (ansible_distribution_major_version == '7')
+- name: CentOS
+  include_tasks: "main-c.yml"
+  when: ansible_distribution is search("CentOS")
