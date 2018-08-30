@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>LS</short>
+  <description>Logstash (LS) is the standard log processing tool for Elasticsearch - www.elastic.co</description>
+  <port protocol="tcp" port="5051"/>
+</service>
+

@@ -1,0 +1,8 @@
+---
+
+## To uninstall set:
+# role_str_version: "-1"
+role_str_version: "6.4.0"
+
+kb_logs: '{{ servers_logs_dir_x }}/kb_logs'
+

@@ -1,0 +1,204 @@
+---
+
+# # Get role files and decompress them
+# - name: check for rpm
+#   stat:
+#     path: "{{ servers_setup_dir_x }}/{{ item.file }}"
+#   register: rpm_files
+#   loop: "{{ role_rpm }}"
+
+# - name: get rpm files
+#   get_url:
+#     url: "{{ role_rpm_path }}/{{ item.item.file }}"
+#     dest: "{{ servers_setup_dir_x }}"
+#     url_username: 'e-contact\{{servers_repo_user}}'
+#     url_password: "{{servers_repo_pwd}}"
+#     force_basic_auth: yes
+#     validate_certs: false
+#   when: not item.stat.exists
+#   loop: "{{ rpm_files.results }}"
+
+# - name: install from local rpm
+#   yum:
+#     name: "{{ servers_setup_dir_x }}/{{ item.file }}"
+#     state: present
+#   loop: "{{ role_rpm }}"
+
+- name: get GPG key without proxy
+  get_url:
+    url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    dest: "/etc"
+    validate_certs: false
+  when: proxy_host is not defined
+
+- name: get GPG key with proxy
+  get_url:
+    url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    dest: "/etc"
+    validate_certs: false
+  when: proxy_host is defined
+  environment:
+    http_proxy: "http://{{proxy_host }}:{{proxy_port}}"
+    https_proxy: "https://{{proxy_host }}:{{proxy_port}}"
+
+- name: Import RPM key
+  rpm_key:
+    state: present
+    key: /etc/GPG-KEY-elasticsearch
+
+- name: provision LS 6.x repo (CentOS/RedHat)
+  copy:
+    src: ls-6x.repo
+    dest: /etc/yum.repos.d/logstash.repo
+    force: yes
+    mode: 0744
+
+- name: install LS (CentOS/RedHat)
+  yum: 
+    name: "logstash-{{ role_str_version }}"
+    state: present
+    update_cache: yes
+
+- name: install logstash plugin translate with proxy
+  command: /usr/share/logstash/bin/logstash-plugin install logstash-filter-translate
+  environment:
+    http_proxy: "http://{{proxy_host}}:{{proxy_port}}"
+  args:
+    creates: "{{ ls_translate_path }}"
+  when: proxy_host is defined
+
+- name: install logstash plugin translate without proxy
+  command: /usr/share/logstash/bin/logstash-plugin install logstash-filter-translate
+  args:
+    creates: "{{ ls_translate_path }}"
+  when: proxy_host is not defined
+
+- name: set logstash startup config file
+  template: 
+    src: logstash.yml
+    dest: /etc/logstash/
+    backup: yes
+    owner: root
+    group: root
+    mode: 0644
+
+# Set LS main config file
+- name: set LS config file
+  template: 
+    src: logstash.conf
+    dest: /etc/logstash/conf.d/
+    owner: root
+    group: root
+    mode: 0644
+
+- name: create logstash dirs
+  file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+    owner: logstash
+    group: logstash
+    state: directory
+  loop:
+    - { path: "{{ ls_logs }}", mode: "0750"}
+
+- name: set firewall config files
+  copy:
+    src: '{{ item }}'
+    dest: /usr/lib/firewalld/services/
+  register: ls_fw
+  loop:
+    - logstash.xml
+    - rsyslog.xml
+
+- name: restart firewall
+  service: 
+    name: firewalld
+    state: restarted
+  when: ls_fw.changed
+
+- name: cfg fw services
+  command: "{{ item }}"
+  with_items:
+    - firewall-cmd --zone=public --permanent --add-service=logstash
+    - firewall-cmd --zone=public --permanent --add-service=rsyslog
+    - firewall-cmd --reload
+  when: ls_fw.changed
+  
+- name: restart firewall
+  service: 
+    name: firewalld
+    enabled: yes
+    state: restarted
+  when: ls_fw.changed
+
+- name: configure logstash log file rotation
+  template: 
+    src: logstash-logrotate.conf
+    dest: /etc/logrotate.d/logstash
+    owner: root
+    group: root
+    mode: 0644
+
+- name: set logstash log for syslog
+  template: 
+    src: 50-logstash.conf
+    dest: /etc/rsyslog.d/
+    mode: 0644
+  notify: restart logging
+
+- name: configure rsyslog for logstash
+  copy:
+    src: "{{ item }}"
+    dest: /etc/rsyslog.d
+    force: yes
+  with_fileglob:
+    - 01-json-template.conf
+    - 10-input-nw.conf
+    - 600-output.conf
+  notify: restart logging
+
+- name: disable local7.* to boot.log
+  replace:
+    dest: /etc/rsyslog.conf
+    regexp: '^local7'
+    replace: '#local7'
+  notify: restart logging
+
+- name: configure rsyslog-all log file
+  copy:
+    src: files/rsyslog-all.log
+    dest: /var/log/
+    force: no
+    owner: root
+    group: root
+    mode: 0644
+
+- name: configure rsyslog-all log file rotation
+  template: 
+    src: rsyslog-all-logrotate.conf
+    dest: /etc/logrotate.d/rsyslog-all
+    owner: root
+    group: root
+    mode: 0644
+
+- name: systemd reload config
+  systemd: 
+    daemon_reload: yes
+
+- name: restart logstash
+  service: 
+    name: logstash
+    enabled: yes
+    state: restarted
+
+- name: wait for logstash beats connection port
+  wait_for:
+    port: 5051
+    host: "{{ansible_host}}"
+    connect_timeout: 1
+    delay: 3
+    timeout: 60
+
+# Check install and version
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"

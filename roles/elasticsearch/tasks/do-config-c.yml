@@ -1,0 +1,44 @@
+---
+
+- name: configure elasticsearch java memory size
+  replace:
+    path: /etc/elasticsearch/jvm.options
+    regexp: '^{{ item.current }}'
+    replace: '{{ item.new_value }}'
+  with_items:
+    - { current: "-Xms.*", new_value: "-Xms{{ es_heap_size }}" }
+    - { current: "-Xmx.*", new_value: "-Xmx{{ es_heap_size }}" }
+  notify: restart elasticsearch
+
+- name: configure java max files
+  replace:
+    path: /usr/lib/systemd/system/elasticsearch.service
+    regexp: '^{{ item.current }}'
+    replace: '{{ item.new_value }}'
+  with_items:
+    - { current: "LimitNOFILE=.*", new_value: "LimitNOFILE={{ es_maxfiles }}" }
+  notify: restart elasticsearch
+
+- name: set elasticsearch config file
+  template: 
+    src: elasticsearch.yml
+    dest: /etc/elasticsearch/
+    owner: root
+    group: elasticsearch
+    mode: 0660
+  notify: restart elasticsearch
+  
+- name: send elasticsearch logs to rsyslog
+  template: 
+    src: 30-elasticsearch.conf
+    dest: /etc/rsyslog.d/
+    mode: 0644
+  notify: restart logging
+
+- name: configure elasticsearch log file rotation
+  template: 
+    src: elasticsearch-logrotate.conf
+    dest: /etc/logrotate.d/elasticsearch
+    owner: root
+    group: root
+    mode: 0644

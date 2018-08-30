@@ -1,0 +1,8 @@
+---
+
+- name: check elasticsearch version
+  uri:
+    url: "http://{{ansible_fqdn}}:9200/"
+    return_content: yes
+  register: url_response
+  ignore_errors: true

@@ -1,0 +1,11 @@
+---
+
+- name: check kibana version
+  uri:
+    url: "http://{{ansible_fqdn}}:5601/api/status"
+    return_content: yes
+  register: url_response
+  ignore_errors: true
+
+# - debug:
+#     var: url_response

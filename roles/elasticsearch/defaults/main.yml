@@ -1,0 +1,14 @@
+---
+
+## To uninstall set:
+# role_str_version: "-1"
+role_str_version: "6.4.0"
+es_groupid: "1950"
+es_userid: "1951"
+es_data: '{{ servers_data_dir_x }}/es_data'
+es_logs: '{{ servers_logs_dir_x }}/es_logs'
+es_maxfiles: "131072"
+es_threadpool_search_size: "32"
+es_threadpool_queue_size: "4000"
+es_xpack_sec: "false"
+es_xpack_ml: "false"

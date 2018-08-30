@@ -1,0 +1,47 @@
+---
+
+- name: set kibana node config file
+  template: 
+    src: kibana.yml
+    dest: /etc/kibana/
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart kibana
+
+# - name: configure existing system indices
+#   uri:
+#     url: "http://{{ es_master1 }}:9200/.*/_settings"
+#     method: PUT
+#     body_format: json
+#     body: 
+#       settings:
+#         index.routing.allocation.require.box_type: "{{ es_box_type }}"
+#         index.number_of_replicas: "{{ es_replicas }}"
+#   when: ( ansible_host == es_master1 )
+
+# - name: configure default system templates
+#   uri:
+#     url: "http://{{ es_master1 }}:9200/_template/{{ item.name }}"
+#     method: PUT
+#     body_format: json
+#     body: 
+#       template: "{{ item.pattern }}"
+#       settings:
+#         index.routing.allocation.require.box_type: "{{ es_box_type }}"
+#         number_of_replicas: "{{ es_replicas }}"
+#   when: ( ansible_host == es_master1 )
+#   with_items:
+#     - { name: ".monitoring-es", pattern: ".monitoring-es-6-*" }
+#     - { name: ".monitoring-kibana", pattern: ".monitoring-kibana-6-*" }
+#     - { name: ".monitoring-logstash", pattern: ".monitoring-logstash-6-*" }
+#     - { name: ".monitoring-alerts", pattern: ".monitoring-alerts-6" }
+#     - { name: ".watch-history-6", pattern: ".watcher-history-6*" }
+#     - { name: ".ml-meta", pattern: "ml-meta" }
+#     - { name: ".ml-state", pattern: ".ml-state" }
+#     - { name: ".ml-anomalies-", pattern: ".ml-anomalies-*" }
+#     - { name: ".ml-notifications", pattern: ".ml-notifications" }
+#     - { name: "watches", pattern: ".watches*" }
+#     - { name: "triggered_watches", pattern: ".triggered_watches*" }
+#     - { name: "security-index-template", pattern: ".security" }
+#     - { name: "security_audit_log", pattern: ".security_audit_log*" }

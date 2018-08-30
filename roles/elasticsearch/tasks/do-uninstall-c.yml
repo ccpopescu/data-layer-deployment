@@ -1,0 +1,19 @@
+---
+
+# - name: uninstall package
+#   yum:
+#     name: "{{ item.package }}"
+#     state: removed
+#   loop: "{{ role_rpm }}"
+
+# - name: unconfigure security limits
+#   lineinfile:
+#     path: /etc/security/limits.conf
+#     line: "{{ item }}"
+#     state: absent
+#   loop:
+#     - "* soft memlock unlimited"
+#     - "* hard memlock unlimited"
+
+- name: get version url
+  include_tasks: "get-version-url-c.yml"

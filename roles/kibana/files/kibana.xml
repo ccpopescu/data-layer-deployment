@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>kibana</short>
+  <description>Kibana (KB) is the standard GUI for Elasticsearch - www.elastic.co</description>
+  <port protocol="tcp" port="5601"/>
+</service>

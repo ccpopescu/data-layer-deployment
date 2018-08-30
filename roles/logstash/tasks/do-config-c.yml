@@ -1,0 +1,129 @@
+---
+
+- name: configure rsyslog
+  copy:
+    src: "{{ item }}"
+    dest: /etc/rsyslog.d
+    force: yes
+  with_fileglob:
+    - 01-json-template.conf
+    - 10-input-nw.conf
+  notify: restart logging
+
+- name: configure rsyslog for logstash
+  template:
+    src: "600-output.conf"
+    dest: /etc/rsyslog.d
+  notify: restart logging
+
+- name: set logstash startup config file
+  template: 
+    src: logstash.yml
+    dest: /etc/logstash/
+    backup: yes
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart logstash
+
+# Set LS main config file
+- name: set logstash config file
+  template: 
+    src: logstash.conf
+    dest: /etc/logstash/conf.d/
+    owner: root
+    group: root
+    mode: 0644
+
+# Set logstash lookup dictionaries
+- name: create logstash dictionaries dir
+  file:
+    path: "{{ ls_dict }}"
+    state: directory
+
+- name: set logstash dict files
+  copy:
+    src: "dictionaries/{{ item }}"
+    dest: "{{ ls_dict }}"
+    mode: 0644
+    force: yes
+  loop:
+    - dictionary-os-name.yml
+    - dictionary-os-release.yml
+    - dictionary-system-relevance.yml
+
+# - name: configure existing system indices
+#   uri:
+#     url: "http://{{es_master1}}:9200/.*/_settings"
+#     method: PUT
+#     body_format: json
+#     body: 
+#       settings:
+#         index.number_of_replicas: "{{ es_replicas }}"
+#   when: ( ansible_host == es_master1 )
+
+# - name: configure default system templates
+#   uri:
+#     url: "http://{{es_master1}}:9200/_template/{{item.name}}"
+#     method: PUT
+#     body_format: json
+#     body: 
+#       template: "{{ item.pattern }}"
+#       settings:
+#         index.routing.allocation.require.box_type: "{{ es_master_box_type }}"
+#         number_of_replicas: "{{ es_replicas }}"
+#   when: ( ansible_host == es_master1 )
+#   with_items:
+#     - { name: ".monitoring-es", pattern: ".monitoring-es-6-*" }
+#     - { name: ".monitoring-kibana", pattern: ".monitoring-kibana-6-*" }
+#     - { name: ".monitoring-logstash", pattern: ".monitoring-logstash-6-*" }
+#     - { name: ".monitoring-alerts", pattern: ".monitoring-alerts-6" }
+#     - { name: ".watch-history-6", pattern: ".watcher-history-6*" }
+#     - { name: ".ml-meta", pattern: "ml-meta" }
+#     - { name: ".ml-state", pattern: ".ml-state" }
+#     - { name: ".ml-anomalies-", pattern: ".ml-anomalies-*" }
+#     - { name: ".ml-notifications", pattern: ".ml-notifications" }
+#     - { name: "watches", pattern: ".watches*" }
+#     - { name: "triggered_watches", pattern: ".triggered_watches*" }
+#     - { name: "security-index-template", pattern: ".security" }
+#     - { name: "security_audit_log", pattern: ".security_audit_log*" }
+
+
+
+
+# - name: configure existing system indices
+#   uri:
+#     url: "http://{{ es_master1 }}:9200/.*/_settings"
+#     method: PUT
+#     body_format: json
+#     body: 
+#       settings:
+#         index.routing.allocation.require.box_type: "{{ es_box_type }}"
+#         index.number_of_replicas: "{{ es_replicas }}"
+#   when: ( ansible_host == es_master1 )
+
+# - name: configure default system templates
+#   uri:
+#     url: "http://{{ es_master1 }}:9200/_template/{{ item.name }}"
+#     method: PUT
+#     body_format: json
+#     body: 
+#       template: "{{ item.pattern }}"
+#       settings:
+#         index.routing.allocation.require.box_type: "{{ es_box_type }}"
+#         number_of_replicas: "{{ es_replicas }}"
+#   when: ( ansible_host == es_master1 )
+#   with_items:
+#     - { name: ".monitoring-es", pattern: ".monitoring-es-6-*" }
+#     - { name: ".monitoring-kibana", pattern: ".monitoring-kibana-6-*" }
+#     - { name: ".monitoring-logstash", pattern: ".monitoring-logstash-6-*" }
+#     - { name: ".monitoring-alerts", pattern: ".monitoring-alerts-6" }
+#     - { name: ".watch-history-6", pattern: ".watcher-history-6*" }
+#     - { name: ".ml-meta", pattern: "ml-meta" }
+#     - { name: ".ml-state", pattern: ".ml-state" }
+#     - { name: ".ml-anomalies-", pattern: ".ml-anomalies-*" }
+#     - { name: ".ml-notifications", pattern: ".ml-notifications" }
+#     - { name: "watches", pattern: ".watches*" }
+#     - { name: "triggered_watches", pattern: ".triggered_watches*" }
+#     - { name: "security-index-template", pattern: ".security" }
+#     - { name: "security_audit_log", pattern: ".security_audit_log*" }

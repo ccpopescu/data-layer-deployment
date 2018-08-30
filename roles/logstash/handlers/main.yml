@@ -1,0 +1,14 @@
+---
+
+- name: restart logstash
+  service: 
+    name: logstash
+    enabled: yes
+    state: restarted
+  listen: "restart logstash"
+
+- name: restart rsyslog
+  service: 
+    name: rsyslog
+    state: restarted
+  listen: "restart logging"

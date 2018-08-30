@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>elasticsearch</short>
+  <description>Elasticsearch (ES) is a nosql database we use mainly to store logs - www.elastic.co</description>
+  <port protocol="tcp" port="9200"/>
+  <port protocol="tcp" port="9300"/>
+</service>

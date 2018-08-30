@@ -1,0 +1,15 @@
+---
+
+- name: restart elasticsearch
+  service: 
+    name: elasticsearch
+    enabled: yes
+    state: restarted
+  listen: "restart elasticsearch"
+
+- name: restart rsyslog
+  service: 
+    name: rsyslog
+    state: restarted
+  listen: "restart logging"
+

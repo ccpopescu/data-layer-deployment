@@ -1,0 +1,113 @@
+
+# ======================== Elasticsearch Configuration =========================
+#
+# NOTE: Elasticsearch comes with reasonable defaults for most settings.
+#       Before you set out to tweak and tune the configuration, make sure you
+#       understand what are you trying to accomplish and the consequences.
+#
+# The primary way of configuring a node is via this file. This template lists
+# the most important settings you may want to configure for a production cluster.
+#
+# Please consult the documentation for further information on configuration options:
+# https://www.elastic.co/guide/en/elasticsearch/reference/index.html
+#
+# ---------------------------------- Cluster -----------------------------------
+#
+# Use a descriptive name for your cluster:
+#
+#cluster.name: my-application
+cluster.name: {{ es_cluster_name }}
+#
+# ------------------------------------ Node ------------------------------------
+#
+# Use a descriptive name for the node:
+#
+#node.name: node-1
+node.name: ${HOSTNAME}
+#
+# Add custom attributes to the node:
+#
+#node.attr.rack: r1
+node.data: {{ es_is_data_node }}
+node.master: {{ es_is_master_node }}
+index.codec: best_compression
+node.attr.box_type: {{ es_box_type }}
+## Resolver warnings COURIER_FETCH
+thread_pool.search.size: {{ es_threadpool_search_size }}
+thread_pool.search.queue_size: {{ es_threadpool_queue_size }}
+#
+# ----------------------------------- Paths ------------------------------------
+#
+# Path to directory where to store the data (separate multiple locations by comma):
+#
+#path.data: /path/to/data
+path.data: {{ es_data }}
+#
+# Path to log files:
+#
+#path.logs: /path/to/logs
+path.logs: {{ es_logs }}
+#
+# Path to snapshot files:
+#path.repo: ["/mount/backups", "/mount/longterm_backups"]
+#
+#
+# ----------------------------------- Memory -----------------------------------
+#
+# Lock the memory on startup:
+#
+#bootstrap.memory_lock: true
+bootstrap.memory_lock: true
+#
+# Make sure that the heap size is set to about half the memory available
+# on the system and that the owner of the process is allowed to use this
+# limit.
+#
+# Elasticsearch performs poorly when the system is swapping the memory.
+#
+# ---------------------------------- Network -----------------------------------
+#
+# Set the bind address to a specific IP (IPv4 or IPv6):
+#
+#network.host: 192.168.0.1
+network.host: 0.0.0.0
+#
+# Set a custom port for HTTP:
+#
+#http.port: 9200
+http.port: 9200
+#
+# For more information, consult the network module documentation.
+#
+# --------------------------------- Discovery ----------------------------------
+#
+# Pass an initial list of hosts to perform discovery when new node is started:
+# The default list of hosts is ["127.0.0.1", "[::1]"]
+#
+#discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+discovery.zen.ping.unicast.hosts: [{{ es_masters }}]
+#
+# Prevent the "split brain" by configuring the majority of nodes (total number of master-eligible nodes / 2 + 1):
+#
+#discovery.zen.minimum_master_nodes: 3
+discovery.zen.minimum_master_nodes: {{ es_min_masters }}
+#
+# For more information, consult the zen discovery module documentation.
+#
+# ---------------------------------- Gateway -----------------------------------
+#
+# Block initial recovery after a full cluster restart until N nodes are started:
+#
+#gateway.recover_after_nodes: 3
+gateway.recover_after_nodes: {{ es_min_gws }}
+#
+# For more information, consult the gateway module documentation.
+#
+# ---------------------------------- Various -----------------------------------
+#
+# Require explicit names when deleting indices:
+#
+#action.destructive_requires_name: true
+xpack.security.enabled: {{ es_xpack_sec }}
+xpack.ml.enabled: {{ es_xpack_ml }}
+xpack.monitoring.collection.enabled: true

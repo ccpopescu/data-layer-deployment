@@ -1,0 +1,148 @@
+---
+
+- name: create elasticsearch group
+  group:
+    name: elasticsearch
+    gid: "{{ es_groupid }}"
+    state: present
+
+- name: create elasticsearch user
+  user:
+    name: elasticsearch
+    uid: "{{ es_userid }}"
+    group: elasticsearch
+    state: present
+
+- name: create elasticsearch dirs
+  file:
+    path: "{{ item.path }}"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: "{{ item.mode }}"
+    state: directory
+  with_items:
+    - { path: "{{ es_data }}", mode: "0774"}
+    - { path: "{{ es_logs }}", mode: "0750"}
+
+- name: get GPG key without proxy
+  get_url:
+    url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    dest: "/etc"
+    validate_certs: false
+  when: proxy_host is not defined
+
+- name: get GPG key with proxy
+  get_url:
+    url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    dest: "/etc"
+    validate_certs: false
+  when: proxy_host is defined
+  environment:
+    http_proxy: "http://{{proxy_host }}:{{proxy_port}}"
+    https_proxy: "https://{{proxy_host }}:{{proxy_port}}"
+
+- name: Import RPM key
+  rpm_key:
+    state: present
+    key: /etc/GPG-KEY-elasticsearch
+
+- name: provision ES 6.x repo (CentOS/RedHat)
+  copy:
+    src: es-6x.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    force: yes
+    mode: 0744
+
+- name: create ES logs dir
+  file:
+    path: "{{ es_logs }}"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0774
+    state: directory
+
+- name: install ES (CentOS/RedHat)
+  yum: 
+    name: "elasticsearch-{{ role_str_version }}"
+    state: present
+    update_cache: yes
+
+- name: set elasticsearch service config dir
+  file:
+    path: /etc/systemd/system/elasticsearch.service.d
+    state: directory
+    mode: 0755
+
+- name: set elasticsearch service config file
+  copy:
+    src: elasticsearch.conf
+    dest: /etc/systemd/system/elasticsearch.service.d/
+    mode: 0644
+    force: yes
+
+- name: systemd reload config
+  systemd: 
+    daemon_reload: yes
+
+- name: set elasticsearch firewall config file
+  copy:
+    src: elasticsearch.xml
+    dest: /usr/lib/firewalld/services/
+    force: yes
+  register: es_fw
+
+- name: restart firewall
+  service: 
+    name: firewalld
+    state: restarted
+  when: es_fw.changed
+
+- name: cfg fw elasticsearch services
+  command: "{{ item }}"
+  with_items:
+    - firewall-cmd --zone=public --permanent --add-service=elasticsearch
+    - firewall-cmd --reload
+  when: es_fw.changed
+  
+- name: restart firewall
+  service: 
+    name: firewalld
+    enabled: yes
+    state: restarted
+  when: es_fw.changed
+
+- name: set elasticsearch config file
+  template: 
+    src: elasticsearch.yml
+    dest: /etc/elasticsearch/
+    owner: root
+    group: elasticsearch
+    mode: 0660
+  register: es_restart
+
+- name: restart elasticsearch
+  service: 
+    name: elasticsearch
+    enabled: yes
+    state: restarted
+
+- name: wait for elasticsearch connection port
+  wait_for:
+    port: 9200
+    host: "{{ansible_fqdn}}"
+    connect_timeout: 1
+    delay: 3
+    timeout: 120
+
+- name: wait for cluster status 'green', 'yellow' or 'red'
+  uri:
+    url: "http://{{ansible_fqdn}}:9200/_cluster/health"
+    return_content: yes
+  register: cluster
+  until: (cluster.json.status == "green") or (cluster.json.status == "yellow") or (cluster.json.status == "red")
+  delay: 10
+  retries: 60
+
+# Check install and version
+- name: get version url
+  include_tasks: "get-version-url-c.yml"

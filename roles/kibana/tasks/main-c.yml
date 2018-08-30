@@ -1,0 +1,16 @@
+---
+
+- name: get version url
+  include_tasks: "get-version-url-c.yml"
+
+- name: uninstall - different version detected
+  include_tasks: "do-uninstall-c.yml"
+  when: not url_response.failed and (role_str_version != url_response.json.version.number)
+
+- name: install required version
+  include_tasks: "do-install-c.yml"
+  when: url_response.failed and (role_str_version != "-1")
+
+- name: configure
+  include_tasks: "do-config-c.yml"
+  when: not url_response.failed and (role_str_version == url_response.json.version.number)

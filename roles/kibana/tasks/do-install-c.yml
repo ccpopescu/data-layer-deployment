@@ -1,0 +1,112 @@
+---
+
+- name: get GPG key without proxy
+  get_url:
+    url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    dest: "/etc"
+    validate_certs: false
+  when: proxy_host is not defined
+
+- name: get GPG key with proxy
+  get_url:
+    url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    dest: "/etc"
+    validate_certs: false
+  when: proxy_host is defined
+  environment:
+    http_proxy: "http://{{proxy_host }}:{{proxy_port}}"
+    https_proxy: "https://{{proxy_host }}:{{proxy_port}}"
+
+- name: Import RPM key
+  rpm_key:
+    state: present
+    key: /etc/GPG-KEY-elasticsearch
+
+- name: provision KB 6.x repo (CentOS/RedHat)
+  copy:
+    src: kb-6x.repo
+    dest: /etc/yum.repos.d/kibana.repo
+    force: yes
+    mode: 0744
+
+- name: install KB (CentOS/RedHat)
+  yum: 
+    name: "kibana-{{ role_str_version }}"
+    state: present
+    update_cache: yes
+
+- name: set kibana node config file
+  template: 
+    src: kibana.yml
+    dest: /etc/kibana/
+    owner: root
+    group: root
+    mode: 0644
+
+- name: create kibana dirs
+  file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+    owner: kibana
+    group: kibana
+    state: directory
+  loop:
+    - { path: "{{ kb_logs }}", mode: "0750"}
+
+- name: systemd reload config
+  systemd: 
+    daemon_reload: yes
+
+- name: set kibana firewall config file
+  copy:
+    src: kibana.xml
+    dest: /usr/lib/firewalld/services/
+    force: yes
+  register: kb_fw
+
+- name: restart firewall
+  service: 
+    name: firewalld
+    state: restarted
+  when: kb_fw.changed
+
+- name: cfg fw kibana services
+  command: "{{ item }}"
+  with_items:
+    - firewall-cmd --zone=public --permanent --add-service=kibana
+    - firewall-cmd --reload
+  when: kb_fw.changed
+  
+- name: restart firewall
+  service: 
+    name: firewalld
+    enabled: yes
+    state: restarted
+  when: kb_fw.changed
+
+- name: restart kibana
+  service: 
+    name: kibana
+    enabled: yes
+    state: restarted
+
+- name: wait for kibana connection port
+  wait_for:
+    port: 5601
+    host: "{{ansible_fqdn}}"
+    connect_timeout: 1
+    delay: 3
+    timeout: 60
+
+- name: wait for cluster status
+  uri:
+    url: "http://{{ansible_fqdn}}:5601/api/status"
+    return_content: yes
+  register: cluster
+  until: (cluster.json.status.overall.state == "green") or (cluster.json.status.overall.state == "yellow") or (cluster.json.status.overall.state == "red")
+  delay: 10
+  retries: 60
+
+# Check install and version
+- name: get version url
+  include_tasks: "get-version-url-c.yml"

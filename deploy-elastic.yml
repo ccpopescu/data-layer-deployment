@@ -5,3 +5,21 @@
 
   roles:
     - java
+
+- name: elasticsearch
+  hosts: elasticsearch
+
+  roles:
+    - elasticsearch
+
+- name: kibana
+  hosts: kibana
+
+  roles:
+    - kibana
+
+- name: logstash
+  hosts: logstash
+
+  roles:
+    - logstash

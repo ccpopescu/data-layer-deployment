@@ -1,0 +1,13 @@
+---
+
+## To uninstall set:
+# role_str_version: "-1"
+role_str_version: "6.4.0"
+role_cmd_get_version: "/usr/share/logstash/bin/logstash --version"
+role_str_installed: 'logstash "{{role_str_version}}'
+
+ls_logs: '{{ servers_logs_dir_x }}/ls_logs'
+ls_translate_path: '/usr/share/logstash/vendor/bundle/jruby/1.9/gems/logstash-filter-translate*'
+ls_dict: '/etc/logstash/dictionaries'
+ls_es_user: 'elastic'
+ls_es_pwd: 'changeme'
