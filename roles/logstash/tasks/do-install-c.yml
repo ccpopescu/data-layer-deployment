@@ -1,29 +1,5 @@
 ---
 
-# # Get role files and decompress them
-# - name: check for rpm
-#   stat:
-#     path: "{{ servers_setup_dir_x }}/{{ item.file }}"
-#   register: rpm_files
-#   loop: "{{ role_rpm }}"
-
-# - name: get rpm files
-#   get_url:
-#     url: "{{ role_rpm_path }}/{{ item.item.file }}"
-#     dest: "{{ servers_setup_dir_x }}"
-#     url_username: 'e-contact\{{servers_repo_user}}'
-#     url_password: "{{servers_repo_pwd}}"
-#     force_basic_auth: yes
-#     validate_certs: false
-#   when: not item.stat.exists
-#   loop: "{{ rpm_files.results }}"
-
-# - name: install from local rpm
-#   yum:
-#     name: "{{ servers_setup_dir_x }}/{{ item.file }}"
-#     state: present
-#   loop: "{{ role_rpm }}"
-
 - name: get GPG key without proxy
   get_url:
     url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
