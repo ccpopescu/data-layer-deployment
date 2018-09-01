@@ -1,0 +1,16 @@
+---
+
+# Delete jdbs app dir
+- name: delete jdbc dir
+  file:
+    path: "{{ role_dest_dir }}"
+    state: absent
+
+- name: remove CLASSPATH
+  lineinfile:
+    path: "$HOME/.bashrc"
+    line: 'export CLASSPATH=".:{{ role_driver_file }}"'
+    state: absent
+
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"

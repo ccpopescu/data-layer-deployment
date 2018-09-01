@@ -1,0 +1,9 @@
+---
+
+- name: check for jdbc driver
+  stat:
+    path: "{{ role_driver_file }}"
+  register: version
+
+# - debug:
+#     var: version

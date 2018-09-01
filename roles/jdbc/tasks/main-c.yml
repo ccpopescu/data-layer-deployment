@@ -1,0 +1,12 @@
+---
+
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"
+
+- name: uninstall - different version detected
+  include_tasks: "do-uninstall-c.yml"
+  when: not version.stat.exists and (role_str_version not in version.stat.path)
+
+- name: install required version
+  include_tasks: "do-install-c.yml"
+  when: not version.stat.exists and (role_str_version != "-1")

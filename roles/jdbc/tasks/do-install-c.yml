@@ -1,0 +1,41 @@
+---
+
+# Create dirs needed by the role
+- name: create dirs
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ servers_setup_dir_x }}/jdbc"
+    - "/usr/share/jdbc"
+
+# Install JDBC
+- name: check for tar file
+  stat:
+    path: "{{ servers_setup_dir_x }}/jdbc/{{ role_file_tar_gz }}"
+  register: tar_file
+
+- name: provision jdbc tar.gz
+  copy:
+    src: "{{ role_file_tar_gz }}"
+    dest: "{{ servers_setup_dir_x }}/jdbc"
+    force: yes
+  when: not tar_file.stat.exists
+
+- name: extract tar file
+  unarchive:
+    src: "{{ servers_setup_dir_x }}/jdbc/{{ role_file_tar_gz }}"
+    dest: "{{ role_dest_dir }}"
+    copy: no
+    mode: 0774
+  args:
+    creates: "{{ role_app_dir }}"
+
+- name: set CLASSPATH
+  lineinfile:
+    path: "$HOME/.bashrc"
+    line: 'export CLASSPATH=".:{{ role_driver_file }}"'
+
+# Check install and version
+- name: get version cmd
+  include_tasks: "get-version-cmd-c.yml"

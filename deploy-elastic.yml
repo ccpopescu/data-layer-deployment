@@ -1,11 +1,17 @@
 ---
 
-- name: Java
+- name: java
   hosts: java
 
   roles:
     - java
 
+- name: jdbc
+  hosts: jdbc
+
+  roles:
+    - jdbc
+    
 - name: elasticsearch
   hosts: elasticsearch
 

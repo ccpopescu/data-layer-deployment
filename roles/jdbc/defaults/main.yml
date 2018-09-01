@@ -1,0 +1,9 @@
+---
+
+## To uninstall set:
+# role_str_version: "-1"
+role_str_main_version: "7.0.0"
+role_file_tar_gz: "sqljdbc_7.0.0.0_enu.tar.gz"
+role_dest_dir: "/usr/share/jdbc"
+role_app_dir: "{{ role_dest_dir }}/sqljdbc_7.0"
+role_driver_file: "{{ role_app_dir }}/enu/mssql-jdbc-7.0.0.jre8.jar"
